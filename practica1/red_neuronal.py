@@ -31,18 +31,17 @@ class Capa:
             x (numpy.ndarray): Vector fila con los valores de la capa anterior
 
         """
-        #print("El producto", x, W)
+        ("El producto", x, W)
         z = x @ self.W
 
-        #print("Antes de activacion", z)
+        ("Antes de activacion", z)
         z = self.activacion(z)
 
         a = z >= self.sesgo
         a = a.astype(float)
-        #print("Valor evaluar", a)
+        ("Valor evaluar", a)
 
         return a
-
 
 
 
@@ -84,6 +83,7 @@ class RedNeuronal:
         # Matriz con valores de la salida
         y = np.empty((tiempo, self.n_salida))
 
+
         # Lista de estados de las capas
         z = np.empty(self.n_capas + 1, dtype=object)
 
@@ -116,6 +116,8 @@ class RedNeuronal:
 
 
 
+
+"""
 capa_1 = Capa(np.array([[2,-1],[-1,2]]),2)
 capa_2 = Capa(np.array([2,2]),2)
 
@@ -126,4 +128,5 @@ red = RedNeuronal([capa_1, capa_2])
 
 valores = [[1,1], [0,1],[1,0], [0,0]]
 
-print(red(valores, 5))
+#print(red(valores, 5))
+"""
