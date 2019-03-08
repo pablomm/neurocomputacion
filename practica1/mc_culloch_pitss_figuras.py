@@ -10,6 +10,7 @@ python fichero_entrada.in tiempo fichero_salida.in
 """
 import sys
 import numpy as np
+import matplotlib.pyplot as plt
 
 from neuro import McCullochPitss, heaviside
 
@@ -65,9 +66,8 @@ if __name__ == "__main__":
                     activacion=lambda z: heaviside(z, umbral))
 
     # Dibuja la red
-    #import matplotlib.pyplot as plt
-    #red.draw()
-    #plt.show()
+    red.draw()
+    plt.show()
 
     # Simula la red durante el tiempo indicado
     y = red(x, tiempo=tiempo)

@@ -1,0 +1,8 @@
+1984 United Stated Congressional Voting Records
+
+1 - no
+2 - yes
+3 - don't know
+
+0 1 rep
+1 0 dem
