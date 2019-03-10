@@ -71,7 +71,6 @@ def plot_ecm(error):
     plt.plot(error)
     plt.xlabel("Época")
     plt.ylabel("Error cuadrático medio")
-    plt.show()
 
 # Funcion reutilizada de FAA con modificaciones
 def plotModel(X, clase, clf, title=None):

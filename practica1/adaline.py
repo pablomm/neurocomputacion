@@ -14,12 +14,12 @@ python fichero_entrada.in tiempo fichero_salida.in
 import sys
 import numpy as np
 
-from neuro import Perceptron, heaviside, parse_argv_data
+from neuro import Adaline, heaviside, parse_argv_data
 
 
 def usage():
-    print("Perceptron monocapa")
-    print("python perceptron.py data_file [test_file | % test] "
+    print("Adaline")
+    print("python adaline.py data_file [test_file | % test] "
           "[outputfile | stdout] [train params]")
     print("Modo 1: train y test en distintos ficheros:")
     print("\tpython perceptron.py file_train file_test file_out [train]")
@@ -27,7 +27,7 @@ def usage():
     print("\tpython perceptron.py file_data 80  file_out [train]")
     print("Modo 3: Todos los datos usados en train y test")
     print("\tpython perceptron.py file_data 100  file_out [train]")
-    print("[train] son los argumentos opcionales learn_rate, epoch, ecm, tol y umbral")
+    print("[train] son los argumentos opcionales learn_rate, epoch, ecm y tol")
     sys.exit()
 
 
@@ -67,12 +67,7 @@ if __name__ == "__main__":
     else:
         tol = 0.
 
-    if len(sys.argv) > 8:
-        umbral = float(sys.argv[8])
-    else:
-        umbral = 0.5
-
-    red = Perceptron(umbral=umbral)
+    red = Adaline()
 
     print("Número de datos de entrenamiento: ", len(X_train))
     print("Tasa de aprendizaje: ", learn_rate)

@@ -13,12 +13,13 @@ python fichero_entrada.in tiempo fichero_salida.in
 """
 import sys
 import numpy as np
+import matplotlib.pyplot as plt
 
-from neuro import Perceptron, heaviside, parse_argv_data
+from neuro import Perceptron, heaviside, plotModel, parse_argv_data, plot_ecm
 
 
 def usage():
-    print("Perceptron monocapa")
+    print("Perceptron")
     print("python perceptron.py data_file [test_file | % test] "
           "[outputfile | stdout] [train params]")
     print("Modo 1: train y test en distintos ficheros:")
@@ -81,7 +82,8 @@ if __name__ == "__main__":
     print("Criterio de parada: tol <", tol)
     print("Entrenando...", end="\r")
 
-    e = red.fit(X_train, y_train, learn_rate=learn_rate, epoch=epoch, ecm=ecm, tol=tol)
+    e = red.fit(X_train, y_train, learn_rate=learn_rate, epoch=epoch, ecm=ecm,
+                tol=tol)
 
     print("Entrenado en ", len(e), "epocas")
     if len(e)>1:
@@ -95,10 +97,9 @@ if __name__ == "__main__":
     print("Precision en los datos de test por neurona : {}/{}".format(aciertos.sum(axis=0),len(res)))
     print("Precision total: {}/{}".format(np.bitwise_and.reduce(aciertos, axis=1).sum(), len(res)))
 
-
-    if len(sys.argv) > 3 and sys.argv[3] != "stdout":
-        np.savetxt(file_out, res, fmt="%d")
-        print("Datos volcados al fichero", file_out)
-    else:
-        print("Resultado:")
-        print('\n'.join(' '.join(str(cell) for cell in row) for row in res))
+    plot_ecm(e)
+    if red.n_entrada == 2:
+        plotModel(X_train, y_train, red)
+    plt.figure()
+    red.draw()
+    plt.show()

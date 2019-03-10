@@ -13,12 +13,13 @@ python fichero_entrada.in tiempo fichero_salida.in
 """
 import sys
 import numpy as np
+import matplotlib.pyplot as plt
 
-from neuro import Perceptron, heaviside, parse_argv_data
+from neuro import Adaline, heaviside, plotModel, parse_argv_data, plot_ecm
 
 
 def usage():
-    print("Perceptron monocapa")
+    print("Adaline")
     print("python perceptron.py data_file [test_file | % test] "
           "[outputfile | stdout] [train params]")
     print("Modo 1: train y test en distintos ficheros:")
@@ -27,7 +28,7 @@ def usage():
     print("\tpython perceptron.py file_data 80  file_out [train]")
     print("Modo 3: Todos los datos usados en train y test")
     print("\tpython perceptron.py file_data 100  file_out [train]")
-    print("[train] son los argumentos opcionales learn_rate, epoch, ecm, tol y umbral")
+    print("[train] son los argumentos opcionales learn_rate, epoch, ecm y tol")
     sys.exit()
 
 
@@ -67,12 +68,7 @@ if __name__ == "__main__":
     else:
         tol = 0.
 
-    if len(sys.argv) > 8:
-        umbral = float(sys.argv[8])
-    else:
-        umbral = 0.5
-
-    red = Perceptron(umbral=umbral)
+    red = Adaline()
 
     print("Número de datos de entrenamiento: ", len(X_train))
     print("Tasa de aprendizaje: ", learn_rate)
@@ -95,10 +91,10 @@ if __name__ == "__main__":
     print("Precision en los datos de test por neurona : {}/{}".format(aciertos.sum(axis=0),len(res)))
     print("Precision total: {}/{}".format(np.bitwise_and.reduce(aciertos, axis=1).sum(), len(res)))
 
-
-    if len(sys.argv) > 3 and sys.argv[3] != "stdout":
-        np.savetxt(file_out, res, fmt="%d")
-        print("Datos volcados al fichero", file_out)
-    else:
-        print("Resultado:")
-        print('\n'.join(' '.join(str(cell) for cell in row) for row in res))
+    plot_ecm(e)
+    
+    if red.n_entrada == 2:
+        plotModel(X_train, y_train, red)
+    plt.figure()
+    red.draw()
+    plt.show()
