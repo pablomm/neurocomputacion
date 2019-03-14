@@ -21,10 +21,10 @@ def usage():
     print("Adaline")
     print("python adaline.py data_file [test_file | % test] "
           "[outputfile | stdout] [train params]")
-    print("Modo 1: train y test en distintos ficheros:")
-    print("\tpython perceptron.py file_train file_test file_out [train]")
-    print("Modo 2: Indicar porcentaje de test (e.g. 80%)")
+    print("Modo 1: Indicar porcentaje de test (e.g. 80%)")
     print("\tpython perceptron.py file_data 80  file_out [train]")
+    print("Modo 2: train y test en distintos ficheros:")
+    print("\tpython perceptron.py file_train file_test file_out [train]")
     print("Modo 3: Todos los datos usados en train y test")
     print("\tpython perceptron.py file_data 100  file_out [train]")
     print("[train] son los argumentos opcionales learn_rate, epoch, ecm y tol")

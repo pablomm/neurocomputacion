@@ -123,3 +123,20 @@ def plotModel(X, clase, clf, title=None):
             ax.title.set_text("$Z_{}$: ".format(k+1) + title)
         else:
             ax.title.set_text("$Z_{}$".format(k+1))
+
+
+def matriz_confusion(pred, real):
+
+    clases = np.unique(real)
+
+    r"""Genera matriz de confusion"""
+
+    matriz = np.zeros((len(clases),len(clases)))
+
+    for i in clases:
+        clasei = real == i
+
+        for j in clases:
+            matriz[j,i] = np.sum(pred[clasei] == j)
+
+    return matriz

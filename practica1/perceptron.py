@@ -14,17 +14,17 @@ python fichero_entrada.in tiempo fichero_salida.in
 import sys
 import numpy as np
 
-from neuro import Perceptron, heaviside, parse_argv_data
+from neuro import Perceptron, heaviside, parse_argv_data, matriz_confusion
 
 
 def usage():
     print("Perceptron monocapa")
     print("python perceptron.py data_file [test_file | % test] "
           "[outputfile | stdout] [train params]")
-    print("Modo 1: train y test en distintos ficheros:")
-    print("\tpython perceptron.py file_train file_test file_out [train]")
-    print("Modo 2: Indicar porcentaje de test (e.g. 80%)")
+    print("Modo 1: Indicar porcentaje de test (e.g. 80%)")
     print("\tpython perceptron.py file_data 80  file_out [train]")
+    print("Modo 2: train y test en distintos ficheros:")
+    print("\tpython perceptron.py file_train file_test file_out [train]")
     print("Modo 3: Todos los datos usados en train y test")
     print("\tpython perceptron.py file_data 100  file_out [train]")
     print("[train] son los argumentos opcionales learn_rate, epoch, ecm, tol y umbral")
@@ -88,12 +88,18 @@ if __name__ == "__main__":
         print("Error cuadrático medio con datos de entrenamiento:", e[-1])
 
     res = red.evaluar(X_test).astype(int)
+    y_test = y_test.astype(int)
 
 
     aciertos = np.equal(res, y_test)
 
     print("Precision en los datos de test por neurona : {}/{}".format(aciertos.sum(axis=0),len(res)))
     print("Precision total: {}/{}".format(np.bitwise_and.reduce(aciertos, axis=1).sum(), len(res)))
+
+    #print("Matriz de confusion")
+    #for i in range(y_test.shape[1]):
+    #    print("Neurona de salida", i)
+    #    print(matriz_confusion(res[:,i], y_test[:,i]))
 
 
     if len(sys.argv) > 3 and sys.argv[3] != "stdout":
