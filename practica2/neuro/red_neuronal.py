@@ -140,3 +140,10 @@ def sigmoidal_bipolar(z_in):
 
     """
     return 2./(1. + np.exp(-z_in)) - 1
+
+def derivada_sigmoidal_bipolar(fx):
+    """Derivada uncion sigmoidal bipolar
+    sigma(z) = 1/(1+ e^-z_in)
+
+    """
+    return .5 * (1+fx) * (1 - fx)
