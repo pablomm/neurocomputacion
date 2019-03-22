@@ -9,4 +9,5 @@
 from .red_neuronal import *
 from .mc_culloch_pitss import McCullochPitss
 from .monocapa import *
+from .multicapa import *
 from .utils import *

@@ -1,6 +1,6 @@
 
 import numpy as np
-from . import RedNeuronal, sigmoidal_bipolar
+from . import RedNeuronal, sigmoidal_bipolar, derivada_sigmoidal_bipolar
 
 
 class PerceptronMulticapa(RedNeuronal):
@@ -67,7 +67,7 @@ class PerceptronMulticapa(RedNeuronal):
             self.deltas[-1] = np.zeros((self.capas[-1]+1, self.n_salida))
 
 
-    def fit(X_train, y_train, learn_rate=.1, epoch=3):
+    def fit(self, X_train, y_train, learn_rate=.1, epoch=3):
 
 
         Xshape = X_train.shape
@@ -100,7 +100,7 @@ class PerceptronMulticapa(RedNeuronal):
                 self.errores[-1] = (y - self.fyin[-1][:-1]) * self.derivada(self.fyin[-1][:-1])
 
                 # Calculamos los deltas con producto matricial (6.2)
-                self.deltas[-1] = learn_rate * (self.errores[-1][:, np.newaxis] @ (self.fyin[-2]).T
+                self.deltas[-1] = learn_rate * (self.errores[-1][:, np.newaxis] @ (self.fyin[-2])).T
 
                 for i in range(self.n_capas_ocultas, 1, -1):
 
@@ -123,30 +123,29 @@ class PerceptronMulticapa(RedNeuronal):
                 for i in range(self.n_capas):
                     self.pesos[i] += self.deltas[i]
 
-        def z_in(self, X_test):
+    def z_in(self, X_test):
 
-            salida = np.empty((X_test.shape[0], self.n_salida))
-            v_entrada = np.ones(self.n_entrada + 1)
+        salida = np.empty((X_test.shape[0], self.n_salida))
+        v_entrada = np.ones(self.n_entrada + 1)
 
-            for j,x in enumerate(X_train):
-                v_entrada[:-1] = x
+        for j,x in enumerate(X_train):
+            v_entrada[:-1] = x
 
-                self.yin[0] = v_entrada @ self.pesos[0]
-                self.fyin[0][:-1] = self.activacion(self.yin[0])
+            self.yin[0] = v_entrada @ self.pesos[0]
+            self.fyin[0][:-1] = self.activacion(self.yin[0])
 
-                # Propagamos hacia delante
-                for i in range(1, self.n_capas-1):
-                    self.yin[i] = self.fyin[i-1] @ self.pesos[i]
-                    self.fyin[i][:-1] = self.activacion(self.yin[i])
+            # Propagamos hacia delante
+            for i in range(1, self.n_capas-1):
+                self.yin[i] = self.fyin[i-1] @ self.pesos[i]
+                self.fyin[i][:-1] = self.activacion(self.yin[i])
 
-                self.yin[self.n_capas-1] = self.fyin[self.n_capas-2] @ self.pesos[self.n_capas-1]
+            self.yin[self.n_capas-1] = self.fyin[self.n_capas-2] @ self.pesos[self.n_capas-1]
 
-                salida[j] = self.yin[self.n_capas-1]
+            salida[j] = self.yin[self.n_capas-1]
 
 
-        def evaluar(self, X_test):
-            return self.z_in(X_test) >= 0
-
+    def evaluar(self, X_test):
+        return self.z_in(X_test) >= 0
 
 
 
