@@ -15,6 +15,7 @@ class PerceptronMulticapa(RedNeuronal):
         super().__init__(activacion=activacion, title=title)
 
     def _inicializar_matriz(self, n, m):
+        return np.zeros((n,m))
         return np.random.uniform(-.5, .5, size=(n, m))
 
     def _inicializar_capas(self):
@@ -40,12 +41,10 @@ class PerceptronMulticapa(RedNeuronal):
         for i in range(n_capas - 1):
             self.yin[i] = np.zeros(shape=self.capas[i])
             self.errores[i] = np.empty(shape=self.capas[i])
-            self.fyin[i] = np.zeros(shape=self.capas[i]+1)
-            self.fyin[i][-1] = 1
+            self.fyin[i] = np.zeros(shape=self.capas[i])
 
         self.yin[-1] = np.zeros(shape=self.n_salida)
-        self.fyin[-1] = np.zeros(shape=self.n_salida + 1)
-        self.fyin[i][-1] = 1
+        self.fyin[-1] = np.zeros(shape=self.n_salida)
 
 
         # Caso sin capas ocultas
@@ -67,8 +66,14 @@ class PerceptronMulticapa(RedNeuronal):
             self.deltas[-1] = np.zeros((self.capas[-1]+1, self.n_salida))
 
 
-    def fit(self, X_train, y_train, learn_rate=.1, epoch=3):
+    def fit(self, X_train, y_train, learn_rate=1, epoch=100):
 
+
+        X_train[X_train==0] = -1
+        y_train[y_train==0] = -1
+
+        print(X_train)
+        print(y_train)
 
         Xshape = X_train.shape
         yshape = y_train.shape
@@ -89,64 +94,70 @@ class PerceptronMulticapa(RedNeuronal):
                 v_entrada[:-1] = x
 
                 self.yin[0] = v_entrada @ self.pesos[0]
-                self.fyin[0][:-1] = self.activacion(self.yin[0])
+                self.fyin[0] = self.activacion(self.yin[0])
 
                 # Propagamos hacia delante
                 for i in range(1, self.n_capas):
-                    self.yin[i] = self.fyin[i-1] @ self.pesos[i]
-                    self.fyin[i][:-1] = self.activacion(self.yin[i])
+                    self.yin[i] = np.append([1], self.fyin[i-1]) @ self.pesos[i]
+                    self.fyin[i] = self.activacion(self.yin[i])
 
                 # Calculamos errores hacia atras (6.1)
-                self.errores[-1] = (y - self.fyin[-1][:-1]) * self.derivada(self.fyin[-1][:-1])
+                self.errores[-1] = (y - self.fyin[-1]) * self.derivada(self.fyin[-1])
 
                 # Calculamos los deltas con producto matricial (6.2)
-                self.deltas[-1] = learn_rate * (self.errores[-1][:, np.newaxis] @ (self.fyin[-2])).T
+                self.deltas[-1] = learn_rate * (self.errores[-1][:, np.newaxis] @ np.append([1], self.fyin[-2])[np.newaxis, :]).T
 
                 for i in range(self.n_capas_ocultas, 1, -1):
 
                     # Calculamos los errores (7.1, 7.2)
                     self.errores[i-1] = self.errores[i] @ self.pesos[i].T
-                    self.errores[i-1] = self.errores[i-1] * self.derivada(self.fyin[i-1][:-1])
+                    self.errores[i-1] = self.errores[i-1] * self.derivada(self.fyin[i-1])
 
                     # Calculamos los deltas (7.3)
-                    self.deltas[i-1] = learn_rate * (self.errores[i-1][:, np.newaxis] @ self.fyin[i-2]).T
-
+                    self.deltas[i-1] = learn_rate * (self.errores[i-1][:, np.newaxis] @ np.append([1], self.fyin[i-2])[np.newaxis, :]).T
 
                 # Calculamos los errores
-                self.errores[0] = self.errores[1] @ self.pesos[1].T
-                self.errores[0] = self.errores[1] * self.derivada(self.fyin[1][:-1])
-
+                self.errores[0] = self.errores[1] @ self.pesos[1][:-1].T
+                self.errores[0] = self.errores[0] * self.derivada(self.fyin[0])
                 # Calculamos los deltas
-                self.deltas[0] = learn_rate * (self.errores[0][:, np.newaxis] @ v_entrada).T
+                self.deltas[0] = learn_rate * (self.errores[0][:, np.newaxis] @ v_entrada[np.newaxis, :]).T
 
                 # Actualizamos los pesos
                 for i in range(self.n_capas):
                     self.pesos[i] += self.deltas[i]
 
+            X_train[X_train==-1] = 0
+            y_train[y_train==-1] = 0
+
     def z_in(self, X_test):
+
+        X_test[X_test==0] = -1
 
         salida = np.empty((X_test.shape[0], self.n_salida))
         v_entrada = np.ones(self.n_entrada + 1)
 
-        for j,x in enumerate(X_train):
+        for j,x in enumerate(X_test):
             v_entrada[:-1] = x
 
             self.yin[0] = v_entrada @ self.pesos[0]
-            self.fyin[0][:-1] = self.activacion(self.yin[0])
+            self.fyin[0] = self.activacion(self.yin[0])
 
             # Propagamos hacia delante
             for i in range(1, self.n_capas-1):
-                self.yin[i] = self.fyin[i-1] @ self.pesos[i]
-                self.fyin[i][:-1] = self.activacion(self.yin[i])
+                self.yin[i] = np.append([1], self.fyin[i-1]) @ self.pesos[i]
+                self.fyin[i] = self.activacion(self.yin[i])
 
-            self.yin[self.n_capas-1] = self.fyin[self.n_capas-2] @ self.pesos[self.n_capas-1]
+            self.yin[self.n_capas-1] = np.append([1], self.fyin[self.n_capas-2]) @ self.pesos[self.n_capas-1]
 
             salida[j] = self.yin[self.n_capas-1]
 
+        X_test[X_test==-1] = 0
+
+        return salida
 
     def evaluar(self, X_test):
+        #return self.z_in(X_test) >= 0
         return self.z_in(X_test) >= 0
-
 
 
 

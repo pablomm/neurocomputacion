@@ -1,10 +1,13 @@
 
 from neuro import *
+import numpy as np
 
-red = PerceptronMulticapa(capas=[3], activacion=sigmoidal_bipolar,
+np.random.seed(1)
+red = PerceptronMulticapa(capas=[1], activacion=sigmoidal_bipolar,
                  derivada=derivada_sigmoidal_bipolar)
 data = np.loadtxt('data/and.txt', skiprows = 1)
-x = data[:,:2]
-y = data[:, 2:]
-red.fit(x, y)
+x = np.atleast_2d(data[0,:2])
+y = np.atleast_2d(data[0, 2:])
+red.fit(x, y, epoch = 100)
 print(red.evaluar(x))
+print(red.pesos)
