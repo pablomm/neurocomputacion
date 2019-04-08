@@ -146,7 +146,11 @@ def derivada_sigmoidal_bipolar(fx):
     sigma(z) = 1/(1+ e^-z_in)
 
     """
-    return .5 * (1+fx) * (1 - fx)
+    fx = np.asarray(fx).squeeze()
+
+    a = np.matrix(.5 * ((1+fx) * (1 - fx)))
+
+    return a
 
 '''
     def sigmoidal_bipolar(z_in, out):

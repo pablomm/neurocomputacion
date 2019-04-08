@@ -1,6 +1,14 @@
 
 import numpy as np
+import numpy.matlib
+
 from . import RedNeuronal, sigmoidal_bipolar, derivada_sigmoidal_bipolar
+
+def scalar_dot(a, b):
+    a = np.array(a).squeeze()
+    b = np.array(b).squeeze()
+
+    return np.matrix(a*b)
 
 
 class PerceptronMulticapa(RedNeuronal):
@@ -15,8 +23,8 @@ class PerceptronMulticapa(RedNeuronal):
         super().__init__(activacion=activacion, title=title)
 
     def _inicializar_matriz(self, n, m):
-        return np.zeros((n,m))
-        return np.random.uniform(-.5, .5, size=(n, m))
+        #return np.matlib.zeros((n,m))
+        return np.matrix(np.random.uniform(-.5, .5, size=(n, m)))
 
     def _inicializar_capas(self):
 
@@ -39,31 +47,44 @@ class PerceptronMulticapa(RedNeuronal):
 
 
         for i in range(n_capas - 1):
-            self.yin[i] = np.zeros(shape=self.capas[i])
-            self.errores[i] = np.empty(shape=self.capas[i])
-            self.fyin[i] = np.zeros(shape=self.capas[i])
+            self.yin[i] = np.matlib.zeros(shape=self.capas[i])
+            self.errores[i] = np.matlib.zeros(shape=self.capas[i])
+            self.fyin[i] = np.matlib.zeros(shape=self.capas[i])
 
-        self.yin[-1] = np.zeros(shape=self.n_salida)
-        self.fyin[-1] = np.zeros(shape=self.n_salida)
+
+
+        self.yin[-1] = np.matlib.zeros(shape=self.n_salida)
+        self.fyin[-1] = np.matlib.zeros(shape=self.n_salida)
 
 
         # Caso sin capas ocultas
         if n_capas == 1:
             self.pesos[0] = self._inicializar_matriz(self.n_entrada+1, self.n_salida)
-            self.deltas[0] = np.zeros((self.n_entrada+1, self.n_salida))
+            self.deltas[0] = np.matlib.zeros((self.n_entrada+1, self.n_salida))
         else:
             # Capa de entrada
+
             self.pesos[0] = self._inicializar_matriz(self.n_entrada+1, self.capas[0])
-            self.deltas[0] = np.zeros((self.n_entrada+1, self.capas[0]))
+            self.deltas[0] = np.matlib.zeros((self.n_entrada+1, self.capas[0]))
 
             # Capas intermedias
             for i in range(1, n_capas-1):
                 self.pesos[i] = self._inicializar_matriz(self.capas[i-1]+1, self.capas[i])
-                self.deltas[i] = np.zeros((self.capas[i-1]+1, self.capas[i]))
+                self.deltas[i] = np.matlib.zeros((self.capas[i-1]+1, self.capas[i]))
 
             # Capa de salida
             self.pesos[-1] = self._inicializar_matriz(self.capas[-1]+1, self.n_salida)
-            self.deltas[-1] = np.zeros((self.capas[-1]+1, self.n_salida))
+            self.deltas[-1] = np.matlib.zeros((self.capas[-1]+1, self.n_salida))
+
+        self.pesos[0] = np.matrix([[.7  ,  -.4],
+                                    [-.2, .3],
+                                    [.4, .6]])
+
+        self.pesos[1] = np.matrix([[.5],
+                                    [.1],
+                                    [-.3]])
+
+
 
 
     def fit(self, X_train, y_train, learn_rate=1, epoch=100):
@@ -98,14 +119,17 @@ class PerceptronMulticapa(RedNeuronal):
 
                 # Propagamos hacia delante
                 for i in range(1, self.n_capas):
-                    self.yin[i] = np.append([1], self.fyin[i-1]) @ self.pesos[i]
+                    self.yin[i] = self.fyin[i-1] @ self.pesos[i,:-1] + self.pesos[i,-1]
                     self.fyin[i] = self.activacion(self.yin[i])
 
                 # Calculamos errores hacia atras (6.1)
-                self.errores[-1] = (y - self.fyin[-1]) * self.derivada(self.fyin[-1])
+                self.errores[-1] = scalar_dot((y - self.fyin[-1]), self.derivada(self.fyin[-1]))
+                print("FYN",self.fyin[-1] )
+                print("Deriv", self.derivada(self.fyin[-1]))
+                print("Error -1", self.errores[-1])
 
                 # Calculamos los deltas con producto matricial (6.2)
-                self.deltas[-1] = learn_rate * (self.errores[-1][:, np.newaxis] @ np.append([1], self.fyin[-2])[np.newaxis, :]).T
+                self.deltas[-1] = learn_rate * (self.errores[-1].T @ np.matrix(np.append([1], self.fyin[-2]))  ).T
 
                 for i in range(self.n_capas_ocultas, 1, -1):
 
@@ -114,16 +138,18 @@ class PerceptronMulticapa(RedNeuronal):
                     self.errores[i-1] = self.errores[i-1] * self.derivada(self.fyin[i-1])
 
                     # Calculamos los deltas (7.3)
-                    self.deltas[i-1] = learn_rate * (self.errores[i-1][:, np.newaxis] @ np.append([1], self.fyin[i-2])[np.newaxis, :]).T
+                    self.deltas[i-1] = learn_rate * (self.errores[i-1] @ np.append([1], self.fyin[i-2])).T
 
                 # Calculamos los errores
                 self.errores[0] = self.errores[1] @ self.pesos[1][:-1].T
-                self.errores[0] = self.errores[0] * self.derivada(self.fyin[0])
+                self.errores[0] = scalar_dot(self.errores[0], self.derivada(self.fyin[0]))
                 # Calculamos los deltas
-                self.deltas[0] = learn_rate * (self.errores[0][:, np.newaxis] @ v_entrada[np.newaxis, :]).T
+                self.deltas[0] = learn_rate * (self.errores[0].T @ np.matrix(v_entrada)).T
 
                 # Actualizamos los pesos
+                print("los deltas")
                 for i in range(self.n_capas):
+                    print(self.deltas[i])
                     self.pesos[i] += self.deltas[i]
 
             X_train[X_train==-1] = 0
