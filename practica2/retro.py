@@ -12,7 +12,6 @@ python fichero_entrada.in tiempo fichero_salida.in
 """
 import sys
 import numpy as np
-
 from neuro import PerceptronMulticapa, plotModel, plot_ecm, matriz_confusion
 
 import argparse
@@ -55,6 +54,8 @@ def parse_data(file_train, output):
     else:
         X_train = X
         y_train = y
+
+        data_test = np.loadtxt(output, skiprows=1)
 
         #data_test = np.loadtxt(output, skiprows=1)
         X_test = data_test[:,:n]
@@ -135,8 +136,11 @@ if __name__ == "__main__":
     ac = np.bitwise_and.reduce(aciertos, axis=1).sum()
     print("Precision total en datos de test: {}/{} ({}%)".format(ac, tot, round(100* ac/tot,2)))
     print("Matriz de confusion de datos de test: ")
-    m = np.matrix(matriz_confusion(res, y_test))
-    print(m)
+    try:
+        m = np.matrix(matriz_confusion(res, y_test))
+        print(m)
+    except:
+        print("No se ha podido calcular la matriz de confusión.")
 
     if args.output[0] is not None:
         print("Volcando datos en archivo", args.output[0], end="\r")

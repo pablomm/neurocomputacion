@@ -185,6 +185,7 @@ class PerceptronMulticapa(RedNeuronal):
                     self.pesos[i] += self.deltas[i]
 
             ecm[epoca-1] /= self.n_salida * Xshape[0]
+            #print(ecm[epoca -1], error)
             if ecm[epoca -1] < error:
                 break
 
