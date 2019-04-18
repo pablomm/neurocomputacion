@@ -5,6 +5,7 @@ import numpy.matlib
 from . import RedNeuronal, sigmoidal_bipolar, derivada_sigmoidal_bipolar
 
 def scalar_dot(a, b):
+    print(a, b)
     a = np.array(a).squeeze()
     b = np.array(b).squeeze()
 
@@ -326,3 +327,126 @@ class Autoencoder(PerceptronMulticapa):
         lrc = lrc[:epoca]
 
         return epoca, ecm[:epoca], pe, mpe, lrc
+
+class MLRegressor(PerceptronMulticapa):
+
+    def fit(self, X_train, y_train, learn_rate=1, epoch=100, error=-1, normalizar=None):
+
+        #X_train = np.copy(X_train)
+        #y_train = np.copy(y_train)
+
+        #X_train[X_train==0] = -1
+        #y_train[y_train==0] = -1
+
+        ecm = np.zeros(epoch)
+        tol = np.zeros(epoch)
+
+        if normalizar is not None:
+            self.normalizar = normalizar
+            X_train = self._normalizar(X_train)
+
+
+        Xshape = X_train.shape
+        yshape = y_train.shape
+
+        if Xshape[0] != yshape[0]:
+            raise ValueError("No coninciden el numero de datos")
+
+        self.n_entrada = Xshape[1]
+        self.n_salida = yshape[1]
+
+
+        self._inicializar_capas()
+
+        v_entrada = np.ones(self.n_entrada + 1)
+
+        for epoca in range(1, epoch + 1):
+            print("Epoca", epoca, end="\r")
+
+            for x, y in zip(X_train, y_train):
+
+                v_entrada[:-1] = x
+
+                self.yin[0] = v_entrada @ self.pesos[0]
+                self.fyin[0] = self.activacion(self.yin[0])
+
+                # Propagamos hacia delante
+                for i in range(1, self.n_capas - 1):
+                    self.yin[i] = np.column_stack((self.fyin[i-1], [1])) @ self.pesos[i]
+                    self.fyin[i] = self.activacion(self.yin[i])
+
+                # Caso ultima capa, funcion de transferencia lineal
+                i = self.n_capas - 1
+                self.yin[i] = np.column_stack((self.fyin[i-1], [1])) @ self.pesos[i]
+                self.fyin[i] = self.yin[i]
+
+
+                diferencia = (y - self.fyin[-1])
+                # Acumulamos el error cuadratico medio
+                ecm[epoca-1] += np.square(diferencia).sum()
+
+                # Calculamos errores hacia atras (6.1)
+                self.errores[-1] = scalar_dot(diferencia,
+                                              self.derivada(self.fyin[-1]))
+
+                # Calculamos los deltas con producto matricial (6.2)
+                self.deltas[-1] = learn_rate * (self.errores[-1].T @ np.column_stack((self.fyin[-2], [1]))).T
+
+                for i in range(self.n_capas_ocultas, 1, -1):
+
+                    # Calculamos los errores (7.1, 7.2)
+                    self.errores[i-1] = self.errores[i] @ self.pesos[i][:-1].T
+                    self.errores[i-1] = scalar_dot(self.errores[i-1],
+                                                   self.derivada(self.fyin[i-1]))
+
+                    # Calculamos los deltas (7.3)
+                    self.deltas[i-1] = learn_rate * (self.errores[i-1].T @ np.column_stack((self.fyin[i-2], [1]))).T
+
+
+                # Calculamos los errores
+                self.errores[0] = self.errores[1] @ self.pesos[1][:-1].T
+                self.errores[0] = scalar_dot(self.errores[0],
+                                             self.derivada(self.fyin[0]))
+                # Calculamos los deltas
+                self.deltas[0] = learn_rate * (self.errores[0].T @ np.matrix(v_entrada)).T
+
+                # Actualizamos los pesos
+                for i in range(self.n_capas):
+                    self.pesos[i] += self.deltas[i]
+
+            ecm[epoca-1] /= self.n_salida * Xshape[0]
+            #print(ecm[epoca -1], error)
+            if ecm[epoca -1] < error:
+                break
+
+        return epoca, ecm[:epoca]
+
+    def evaluar(self, X_test):
+
+        #X_test = np.copy(X_test)
+        #X_test[X_test==0] = -1
+
+        if self.normalizar is not None:
+            X_test = self._normalizar(X_test)
+
+        salida = np.empty((X_test.shape[0], self.n_salida))
+        v_entrada = np.ones(self.n_entrada + 1)
+
+        for j,x in enumerate(X_test):
+            v_entrada[:-1] = x
+
+
+            self.yin[0] = v_entrada @ self.pesos[0]
+            self.fyin[0] = self.activacion(self.yin[0])
+
+            # Propagamos hacia delante
+            for i in range(1, self.n_capas-1):
+                self.yin[i] = np.column_stack((self.fyin[i-1], [1])) @ self.pesos[i]
+                self.fyin[i] = self.activacion(self.yin[i])
+
+            self.yin[self.n_capas-1] = np.column_stack((self.fyin[self.n_capas-2], [1])) @ self.pesos[self.n_capas-1]
+
+            salida[j] = self.yin[self.n_capas-1]
+
+
+        return salida

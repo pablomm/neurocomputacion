@@ -139,7 +139,9 @@ def sigmoidal_bipolar(z_in):
     sigma(z) = 1/(1+ e^-z_in)
 
     """
+    #print(z_in)
     z_in[z_in<-100] = -100
+    #z_in[z_in>100] = 100
     return 2./(1. + np.exp(-z_in)) - 1
 
 def derivada_sigmoidal_bipolar(fx):
