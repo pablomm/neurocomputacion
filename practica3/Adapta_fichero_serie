@@ -1,0 +1,95 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+# Generador de datos para entrenar el regresor de series temporales.
+# Neurocomputación - Practica 3
+# Jorge Arellano y Pablo Marcos
+
+import argparse
+import numpy as np
+
+def preparar_datos(x, n, m):
+    """Dada la serie temporal (x1, x2, x3, x4, ...)
+    La prepara para ser entrenada por la red neuronal, devolviendo dos
+    arrays.
+    ((x1, x2, ..., xn  )  | ((xn+1, xn+2, ..., xn+m  )
+     (x2, x3, ..., xn+1)  |  (xn+2, xn+3, ..., xn+m+1)
+     (x3, x4, ..., xn+2)  |  (xn+3, xn+4, ..., xn+m+2)
+     (x4, x5, ..., xn+3)  |  (xn+4, xn+5, ..., xn+m+3)
+     (x5, x6, ..., xn+4)) |  (xn+5, xn+6, ..., xn+m+4))
+
+     Args:
+        n (float, optional): Tamaño de la capa de entrada
+        m (float, optional): Tamaño de la capa de salida
+
+    Returns:
+        Array con datos conforme a los requerimientos.
+    """
+
+    length = len(x) - n - m + 1
+
+    data = np.empty((length, n + m))
+
+    for i in range(length):
+        data[i, :n] = x[i:i+n]
+        data[i, n:] = x[i+n:i+n+m]
+
+    return data
+
+
+def volcar_datos(fich_salida, data, na, ns):
+
+    with open(fich_salida, "w") as f:
+        f.write("{} {}\n".format(na,ns))
+        np.savetxt(f, data)
+
+    print("Datos volcados en", fich_salida)
+
+
+if __name__ == '__main__':
+
+    # Parseador del script
+    parser = argparse.ArgumentParser(description="Prepara los datos de una "
+                                     "serie temporal para su predicción.")
+
+    parser.add_argument('fich_entrada', type=str, nargs=1,
+                       help='fichero con serie temporal.')
+    parser.add_argument('fich_salida', type=str, nargs=1,
+                        help='fichero de salida.')
+    parser.add_argument('Na', type=int, nargs=1,
+                        help='Neuronas en la capa de entrada.')
+    parser.add_argument('Ns', type=int, nargs=1,
+                        help='Neuronas en la capa de salida.')
+    parser.add_argument('--plot', action='store_true',
+                        help="Dibuja la serie temporal")
+
+
+    args = parser.parse_args()
+
+    fich_entrada = args.fich_entrada[0]
+    fich_salida = args.fich_salida[0]
+    na = args.Na[0]
+    ns = args.Ns[0]
+
+    try:
+        x = np.loadtxt(fich_entrada)
+    except Exception as e:
+        raise ValueError("Error en el fichero de entrada " + fich_entrada +
+                         ": " + str(e))
+
+    data = preparar_datos(x, na, ns)
+
+
+    try:
+        volcar_datos(fich_salida, data, na, ns)
+    except Exception as e:
+        raise ValueError("Error volcando datos en " + fich_salida +
+                         ": " + str(e))
+
+    if args.plot:
+        # Importado aqui para poder ejecutar en laboratorios de la eps sin plt
+        import matplotlib.pyplot as plt
+        plt.style.use('seaborn')
+        plt.tight_layout()
+        plt.plot(x)
+        plt.show()

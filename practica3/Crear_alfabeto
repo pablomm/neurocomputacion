@@ -1,0 +1,121 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+# Generador de letras con ruido para entrenar autoencoder
+# Neurocomputación - Practica 3
+# Jorge Arellano y Pablo Marcos
+
+import argparse
+import numpy as np
+
+
+input_file = "data/alfabeto_dat.txt" # Fichero de entrada por defecto
+output_file = "data/alfabeto_salida_dat.txt" # Fichero de salida por defecto
+dimensiones = (7,5) # Dimensiones de las letras
+n_letras_plot = 6 # Numero de letras a dibujar con la opción --plot
+
+
+def cargar_alfabeto(fich_entrada, x, y):
+    """Carga el alfabeto proporcionado en un array"""
+
+    matrix = np.loadtxt(fich_entrada, dtype=int, comments=r'//')
+
+    return matrix.reshape(-1, x*y)
+
+def volcar_datos(fich_salida, datos):
+
+    n = datos.shape[1] // 2
+    with open(fich_salida, "w") as f:
+        f.write("{} {}\n".format(n,n))
+        np.savetxt(f, datos, fmt='%i')
+
+
+if __name__ == '__main__':
+
+    # Parseador del script
+    parser = argparse.ArgumentParser(description='Genera alfabeto para entrenar'
+                                     ' autoencoder.')
+    parser.add_argument('num_copias', type=int, nargs=1,
+                        help='Número de veces que cada letra es creada como '
+                        'dato.')
+    parser.add_argument('num_errores', type=float, nargs=1,
+                        help='Probabilidad de pixel erróneo.')
+    parser.add_argument('fich_entrada', type=str, nargs='?', default=input_file,
+                       help='fichero con alfabeto. Por defecto ' + input_file)
+    parser.add_argument('fich_salida', type=str, nargs='?',
+                       default=output_file,
+                       help='fichero resultado. Por defecto ' + output_file)
+    parser.add_argument('--n_letras', type=int, nargs='?',
+                       default=26,
+                       help='Numero de letras')
+    parser.add_argument('--plot', action='store_true',
+                        help="Dibuja una muestra de las primeras letras")
+
+
+    args = parser.parse_args()
+    num_copias = args.num_copias[0]
+    prob_error = args.num_errores[0]
+    fich_entrada = args.fich_entrada
+    fich_salida = args.fich_salida
+    if prob_error > 1 or prob_error < 0:
+        raise ValueError("La probabilidad de error debe estar entre 0 y 1.")
+
+    try:
+        alfabeto = cargar_alfabeto(fich_entrada, *dimensiones)
+    except Exception as e:
+        raise ValueError("Error en el fichero de entrada " + fich_entrada +
+                         ": " + str(e))
+
+    n_letras = alfabeto.shape[0]
+
+    if n_letras > args.n_letras:
+        n_letras = args.n_letras
+        alfabeto = alfabeto[:n_letras]
+
+    n_pixeles = alfabeto.shape[1]
+
+    # Matriz con datos ruidosos
+    data = np.empty((n_letras*num_copias, 2*n_pixeles), dtype=int)
+
+    alfabeto_rep = np.repeat(alfabeto, num_copias, axis=0)
+
+    data[:, n_pixeles:] = alfabeto_rep
+    data[:, :n_pixeles] = alfabeto_rep
+
+    if prob_error > 0:
+        noise = np.random.choice(2, p =[1-prob_error, prob_error],
+                                 size=alfabeto_rep.shape).astype(bool)
+
+        data[:, :n_pixeles][noise] = 1 - data[:, :n_pixeles][noise]
+
+    try:
+        volcar_datos(fich_salida, data)
+        print("Datos guardados en", fich_salida)
+    except Exception as e:
+        raise ValueError("Error volcando datos en " + fich_salida +
+                         ": " + str(e))
+
+    if args.plot:
+        # Importado aqui para poder ejecutar en laboratorios de la eps sin plt
+        import matplotlib.pyplot as plt
+
+        plt.style.use('seaborn')
+
+        n_plots = min(n_letras_plot, n_letras)
+        fig, ax = plt.subplots(2, n_plots)
+        ax[0, 0].set_ylabel('Letra original')
+        ax[1, 0].set_ylabel('Letra Ruidosa')
+
+        for i in range(n_plots):
+            ax[0, i].imshow(data[i, n_pixeles:].reshape((7,5)), cmap="Greys")
+            ax[1, i].imshow(data[i, :n_pixeles].reshape((7,5)), cmap="Greys")
+
+
+            ax[0, i].set_xticks([])
+            ax[1, i].set_yticks([])
+            ax[0, i].set_yticks([])
+            ax[1, i].set_xticks([])
+
+        plt.tight_layout()
+
+        plt.show()
