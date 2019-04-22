@@ -163,12 +163,14 @@ if __name__ == '__main__':
         ax[1, 0].set_ylabel("Letra Ruidosa")
         ax[2, 0].set_ylabel("Letra Recuperada")
 
+        idx = np.arange(len(X_test))
+        np.random.shuffle(idx)
+
         for i in range(6):
 
-            ax[0, i].imshow(y_test[i].reshape((7,5)), cmap="Greys")
-            ax[1, i].imshow(X_test[i].reshape((7,5)), cmap="Greys")
-            ax[2, i].imshow(res[i].reshape((7,5)), cmap="Greys")
-
+            ax[0, i].imshow(y_test[idx[i]].reshape((7,5)), cmap="Greys")
+            ax[1, i].imshow(X_test[idx[i]].reshape((7,5)), cmap="Greys")
+            ax[2, i].imshow(res[idx[i]].reshape((7,5)), cmap="Greys")
 
 
             ax[0, i].set_xticks([])

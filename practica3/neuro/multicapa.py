@@ -5,7 +5,7 @@ import numpy.matlib
 from . import RedNeuronal, sigmoidal_bipolar, derivada_sigmoidal_bipolar
 
 def scalar_dot(a, b):
-    print(a, b)
+
     a = np.array(a).squeeze()
     b = np.array(b).squeeze()
 
