@@ -70,7 +70,7 @@ if __name__ == '__main__':
                        help="Fichero de salida")
     parser.add_argument('-e', '--epoch', type=int, nargs=1, default=[100],
                        help="Maximas épocas de entrenamiento")
-    parser.add_argument('--learning', type=float, nargs=1, default=[.1],
+    parser.add_argument('--learning', type=float, nargs=1, default=[.01],
                        help="Tasa de aprendizaje")
     parser.add_argument('--ecm', type=float, nargs=1, default=[0],
                        help="Condición de parada con error cuadrático medio")
@@ -99,13 +99,59 @@ if __name__ == '__main__':
                                       error=args.ecm[0],
                                       learn_rate=args.learning[0])
 
-    res = mlr.evaluar(X_train)
+    res_train = mlr.evaluar(X_train)
+    res_test = mlr.evaluar(X_test)
+
+    ecm_train = np.square(res_train - y_train).mean()
+    ecm_test = np.square(res_test - y_test).mean()
+
+    # Prediccion recursiva sobre datos de X_test
+
+    x_recursivo = X_train[-1]
+
+    prediccion_recursiva = np.empty(len(y_test))
+    ecm_test = np.square(res_test - y_test).mean()
+
+    for i in range(len(prediccion_recursiva)):
+        pred = mlr.evaluar(np.array([x_recursivo]))
+        prediccion_recursiva[i] = pred[0,0]
+        x_recursivo = np.roll(x_recursivo, -1)
+        x_recursivo[-1] = prediccion_recursiva[i]
+
+    #ecm_recursivo = np.square(res_test - y_test).mean()
 
 
-    import matplotlib.pyplot as plt
+    print("Error cuadrático medio sobre datos de entrenamiento", ecm_train)
+    print("Error cuadrático medio sobre datos de test", ecm_test)
 
-    a = np.arange(1,len(res[0]))
-    for i in range(len(res)):
-        plt.plot(a + i, res[i])
+    print("||y_train - ML(X_train)||_inf = ", np.abs(res_train - y_train).max())
+    print("||y_test - ML(X_test)||_inf = ", np.abs(res_test - y_test).max())
 
-    plt.show()
+
+    if args.plot:
+        import matplotlib.pyplot as plt
+        plt.plot(ecm)
+        plt.title("Error cuadrático medio en entrenamiento")
+        plt.xlabel("Época")
+        plt.ylabel("ECM")
+
+        for res, name in zip([res_train, res_test], ["train", "test"]):
+            plt.figure()
+            plt.title("Predicción sobre datos de " + name)
+
+            if res.shape[1] == 1:
+                plt.scatter(np.arange(len(res)), res.flatten())
+            else:
+                l = res.shape[1]
+                a = np.arange(1,len(res) + l)
+                for i in range(len(res)):
+                    plt.plot(a[i:i+l], res[i])
+
+        plt.figure()
+        plt.title("Predicción recursiva")
+        plt.plot(prediccion_recursiva)
+        plt.plot(y_test[:,0], linestyle='--')
+        plt.legend(['predicción recursiva', 'serie real'])
+
+
+        plt.show()

@@ -3,6 +3,7 @@
 
 
 autoencoder=./Autoencoder
+serie=./Serie
 
 
 data=data
@@ -27,3 +28,7 @@ autoencoder_exec:
 	./Crear_Alfabeto 20 0.13 $(alfabeto) alfabeto_train.txt --n_letras 15
 	./Crear_Alfabeto 10 0.07 $(alfabeto) alfabeto_test.txt --n_letras 15
 	$(autoencoder) alfabeto_train.txt alfabeto_test.txt -e 500 -l 100 --plot
+
+
+serie_help:
+	$(serie) -h

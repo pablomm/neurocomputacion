@@ -361,9 +361,10 @@ class MLRegressor(PerceptronMulticapa):
         v_entrada = np.ones(self.n_entrada + 1)
 
         for epoca in range(1, epoch + 1):
-            print("Epoca", epoca, end="\r")
+            print("Epoca", epoca, end='\r')
 
             for x, y in zip(X_train, y_train):
+                #print(x,y)
 
                 v_entrada[:-1] = x
 
@@ -371,29 +372,32 @@ class MLRegressor(PerceptronMulticapa):
                 self.fyin[0] = self.activacion(self.yin[0])
 
                 # Propagamos hacia delante
-                for i in range(1, self.n_capas - 1):
+                for i in range(1, self.n_capas):
                     self.yin[i] = np.column_stack((self.fyin[i-1], [1])) @ self.pesos[i]
-                    self.fyin[i] = self.activacion(self.yin[i])
+                    if i == self.n_capas -1:
+                        self.fyin[i] = self.yin[i]
+                    else:
+                        self.fyin[i] = self.activacion(self.yin[i])
 
                 # Caso ultima capa, funcion de transferencia lineal
-                i = self.n_capas - 1
-                self.yin[i] = np.column_stack((self.fyin[i-1], [1])) @ self.pesos[i]
-                self.fyin[i] = self.yin[i]
-
-
-                diferencia = (y - self.fyin[-1])
+                #i = self.n_capas - 1
+                #self.yin[i] = np.column_stack((self.fyin[i-1], [1])) @ self.pesos[i]
+                #self.fyin[i] = self.yin[i]
+                diferencia = (y - self.yin[-1])
                 # Acumulamos el error cuadratico medio
                 ecm[epoca-1] += np.square(diferencia).sum()
 
                 # Calculamos errores hacia atras (6.1)
-                self.errores[-1] = scalar_dot(diferencia,
-                                              self.derivada(self.fyin[-1]))
+                #self.errores[-1] = scalar_dot(diferencia,
+                #                              self.derivada(self.fyin[-1]))
+                self.errores[-1] = diferencia
 
                 # Calculamos los deltas con producto matricial (6.2)
                 self.deltas[-1] = learn_rate * (self.errores[-1].T @ np.column_stack((self.fyin[-2], [1]))).T
+                #print(self.deltas[-1])
 
                 for i in range(self.n_capas_ocultas, 1, -1):
-
+                    #print("PROROROROROROROR")
                     # Calculamos los errores (7.1, 7.2)
                     self.errores[i-1] = self.errores[i] @ self.pesos[i][:-1].T
                     self.errores[i-1] = scalar_dot(self.errores[i-1],
